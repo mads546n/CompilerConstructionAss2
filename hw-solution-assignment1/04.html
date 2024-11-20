@@ -1,0 +1,52 @@
+
+
+
+<!DOCTYPE html>
+<html><head><title> vonNeumannAdder</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script></head><body>
+<h1>vonNeumannAdder</h1>
+<h2> Inputs </h2>
+Read a0 a1 a2 a3 b0 b1 b2 b3 
+ <h2> Outputs </h2>
+ s0 s1 s2 s3 Overflow 
+ <h2> Latches </h2>
+ma0 ma1 ma2 ma3 mb0 mb1 mb2 mb3 Overflow 
+ <h2> Definitions </h2>
+\(\mathit{xor}(a,b)=((\mathrm{a}\wedge\neg(\mathrm{b}))\vee(\neg(\mathrm{a})\wedge\mathrm{b}))\)<br>
+\(\mathit{mux}(a,b,c)=((\mathrm{a}\wedge\mathrm{c})\vee(\mathrm{b}\wedge\neg(\mathrm{c})))\)<br>
+
+ <h2> Updates </h2>
+s0&larr;\(\mathit{xor}(\mathrm{ma0'},\mathrm{mb0'})\)<br>
+s1&larr;\(\mathit{xor}(\mathrm{ma1'},\mathrm{mb1'})\)<br>
+s2&larr;\(\mathit{xor}(\mathrm{ma2'},\mathrm{mb2'})\)<br>
+s3&larr;\(\mathit{xor}(\mathrm{ma3'},\mathrm{mb3'})\)<br>
+c0&larr;\((\mathrm{ma0'}\wedge\mathrm{mb0'})\)<br>
+c1&larr;\((\mathrm{ma1'}\wedge\mathrm{mb1'})\)<br>
+c2&larr;\((\mathrm{ma2'}\wedge\mathrm{mb2'})\)<br>
+c3&larr;\((\mathrm{ma3'}\wedge\mathrm{mb3'})\)<br>
+Overflow&larr;\(\mathit{mux}(\mathrm{c3},\mathrm{Overflow'},\mathrm{Read})\)<br>
+ma0&larr;\(\mathit{mux}(\mathrm{a0},\mathrm{s0},\mathrm{Read})\)<br>
+ma1&larr;\(\mathit{mux}(\mathrm{a1},\mathrm{s1},\mathrm{Read})\)<br>
+ma2&larr;\(\mathit{mux}(\mathrm{a2},\mathrm{s2},\mathrm{Read})\)<br>
+ma3&larr;\(\mathit{mux}(\mathrm{a3},\mathrm{s3},\mathrm{Read})\)<br>
+zero&larr;\((\mathrm{b0}\wedge\neg(\mathrm{b0}))\)<br>
+mb0&larr;\(\mathit{mux}(\mathrm{b0},\mathrm{zero},\mathrm{Read})\)<br>
+mb1&larr;\(\mathit{mux}(\mathrm{b1},\mathrm{c0},\mathrm{Read})\)<br>
+mb2&larr;\(\mathit{mux}(\mathrm{b2},\mathrm{c1},\mathrm{Read})\)<br>
+mb3&larr;\(\mathit{mux}(\mathrm{b3},\mathrm{c2},\mathrm{Read})\)<br>
+
+ <h2> Simulation inputs </h2>
+<b>Read</b>: 100000000<br>
+<b>a0</b>: 100000000<br>
+<b>a1</b>: 000000000<br>
+<b>a2</b>: 000000000<br>
+<b>a3</b>: 000000000<br>
+<b>b0</b>: 100000000<br>
+<b>b1</b>: 100000000<br>
+<b>b2</b>: 100000000<br>
+<b>b3</b>: 000000000<br>
+
+</body></html>
+
