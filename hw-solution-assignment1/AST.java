@@ -66,7 +66,28 @@ class UseDef extends Expr{
 
     @Override
     public Boolean eval(Environment env) {
-        throw new RuntimeException("temporary error-message");
+        // Retrieve function definition
+        Def functionDef = env.getDef(f);
+        if (functionDef == null) {
+            error("Function " + f + " is not defined!");
+        }
+
+        // Create a new environment for the function-call
+        List<String> formalArgs = functionDef.args;
+        if (formalArgs.size() != args.size()) {
+            error("Function " + f + " expects " + formalArgs.size() + " arguments, but got " + args.size());
+        }
+
+        Environment functionEnv = new Environment(env);
+
+        // Bind actual arguments to formal parameters in the newly created environment
+        for (int i = 0; i < formalArgs.size(); i++) {
+            String formalArg = formalArgs.get(i);
+            boolean actualValue = args.get(i).eval(env);    // Evaluation of argument in current env
+            functionEnv.setVariable(formalArg, actualValue);
+        }
+
+        return functionDef.e.eval(functionEnv);
     }
 }
 
@@ -186,7 +207,10 @@ class Circuit extends AST{
     public void runSimulator(Environment env) {
         initialize(env);
 
+        System.out.println("Starting simulation cycles...");
+
         for (int i = 1; i < simlength; i++) {
+            System.out.println("Cycle " + i);
             nextCycle(env, i);
         }
     }
@@ -224,6 +248,20 @@ class Circuit extends AST{
             env.setVariable(input, inputTrace.values[0]);
         }
 
+        // Determine simlength based on siminputs
+        // Ensure all siminputs have same length
+        if (siminputs.isEmpty()) {
+            error("No simulation inputs provided!");
+        } else {
+            int length = siminputs.get(0).values.length;
+            for (Trace inputTrace : siminputs) {
+                if (inputTrace.values.length != length) {
+                    error("All siminputs must have same length!");
+                }
+            }
+            simlength = length;
+        }
+
         // Initialize latch-outputs
         latchesInit(env);
 
@@ -235,6 +273,7 @@ class Circuit extends AST{
         // Lastly, print environment
         System.out.println("Environment efter initialization:");
         System.out.println(env);
+        System.out.println("Simlength: " + simlength);
     }
 
     // Method to simulate the next cycle of the Circuit

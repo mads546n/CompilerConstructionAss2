@@ -27,7 +27,14 @@ class Environment {
     // This constructor can be used during eval to create a new
     // environment with the same definitions contained in an existing
     // one:
-    public Environment(Environment env) { this.defs=env.defs; }
+    //public Environment(Environment env) { this.defs=env.defs; }
+
+    // New copied constructor
+    public Environment(Environment env) {
+        this.defs=env.defs;
+        this.variableValues.putAll(env.variableValues);
+        this.defs.putAll(env.defs);
+    }
 
     // Lookup a definition, e.g., "xor"
     public Def getDef(String name){

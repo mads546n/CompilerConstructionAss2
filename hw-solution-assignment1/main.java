@@ -35,6 +35,16 @@ public class main {
 		// create a parser
 		hwParser parser = new hwParser(tokens);
 
+		parser.removeErrorListeners();
+
+		parser.addErrorListener(new BaseErrorListener() {
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+				System.err.println("Syntax error at line " + line + ":" + charPositionInLine + " " + msg);
+				System.exit(-1);
+			}
+		});
+
 		// and parse anything from the grammar for "start"
 		ParseTree parseTree = parser.start();
 
@@ -48,6 +58,10 @@ public class main {
 	   AST.java). */
 
 		Circuit p = (Circuit) new AstMaker().visit(parseTree);
+		if (p == null) {
+			System.err.println("Error: Circuit object is null.");
+			System.exit(-1);
+		}
 
 	/* For the second assignment you need to extend the classes of
 	    AST.java with some methods that correspond to running a
@@ -55,7 +69,7 @@ public class main {
 	    inputs. The method for starting the simulation should be
 	    called here for the Circuit p. */
 
-		Environment env = new Environment();
+		Environment env = new Environment(p.definitions);
 		p.runSimulator(env);
 	}
 }
