@@ -6,7 +6,6 @@ outputs: Oscillator
 latches: Oscillator
 
 updates:
-
 Oscillator = /Oscillator' /Reset
 
 siminputs:

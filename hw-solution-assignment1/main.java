@@ -10,51 +10,68 @@ import java.util.ArrayList;
 import java.io.IOException;
 
 public class main {
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException {
 
-	// we expect exactly one argument: the name of the input file
-	if (args.length!=1) {
-	    System.err.println("\n");
-	    System.err.println("Hardware Simulator\n");
-	    System.err.println("==================\n\n");
-	    System.err.println("Please give as input argument a filename\n");
-	    System.exit(-1);
-	}
-	String filename=args[0];
+		// we expect exactly one argument: the name of the input file
+		if (args.length != 1) {
+			System.err.println("\n");
+			System.err.println("Hardware Simulator\n");
+			System.err.println("==================\n\n");
+			System.err.println("Please give as input argument a filename\n");
+			System.exit(-1);
+		}
+		String filename = args[0];
 
-	// open the input file
-	CharStream input = CharStreams.fromFileName(filename);
-	    //new ANTLRFileStream (filename); // depricated
-	
-	// create a lexer/scanner
-	hwLexer lex = new hwLexer(input);
-	
-	// get the stream of tokens from the scanner
-	CommonTokenStream tokens = new CommonTokenStream(lex);
-	
-	// create a parser
-	hwParser parser = new hwParser(tokens);
-	
-	// and parse anything from the grammar for "start"
-	ParseTree parseTree = parser.start();
+		// open the input file
+		CharStream input = CharStreams.fromFileName(filename);
+		//new ANTLRFileStream (filename); // depricated
 
-	// The JaxMaker is a visitor that produces html/jax output as a string
-	String result = new JaxMaker().visit(parseTree);
-	System.out.println("\n\n\n"+result);
+		// create a lexer/scanner
+		hwLexer lex = new hwLexer(input);
+
+		// get the stream of tokens from the scanner
+		CommonTokenStream tokens = new CommonTokenStream(lex);
+
+		// create a parser
+		hwParser parser = new hwParser(tokens);
+
+		parser.removeErrorListeners();
+
+		parser.addErrorListener(new BaseErrorListener() {
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+				System.err.println("Syntax error at line " + line + ":" + charPositionInLine + " " + msg);
+				System.exit(-1);
+			}
+		});
+
+		// and parse anything from the grammar for "start"
+		ParseTree parseTree = parser.start();
+
+		// The JaxMaker is a visitor that produces html/jax output as a string
+		String result = new JaxMaker().visit(parseTree);
+		System.out.println("\n\n\n" + result);
 
 	/* The AstMaker generates the abstract syntax to be used for
 	   the second assignment, where for the start symbol of the
 	   ANTLR grammar, it generates an object of class Circuit (see
 	   AST.java). */
-	
-	Circuit p = (Circuit) new AstMaker().visit(parseTree);
+
+		Circuit p = (Circuit) new AstMaker().visit(parseTree);
+		if (p == null) {
+			System.err.println("Error: Circuit object is null.");
+			System.exit(-1);
+		}
 
 	/* For the second assignment you need to extend the classes of
 	    AST.java with some methods that correspond to running a
 	    simulation of the given hardware for given simulation
 	    inputs. The method for starting the simulation should be
 	    called here for the Circuit p. */
-    }
+
+		Environment env = new Environment(p.definitions);
+		p.runSimulator(env);
+	}
 }
 
 // The visitor for producing html/jax -- solution for assignment 1, task 3:
@@ -62,7 +79,7 @@ public class main {
 class JaxMaker extends AbstractParseTreeVisitor<String> implements hwVisitor<String> {
 
     public String visitStart(hwParser.StartContext ctx){
-	// 
+	//
 	String result = "<!DOCTYPE html>\n"+
 	    "<html><head><title> "+ctx.name.getText()+ "</title>\n"+
 	    "<script src=\"https://polyfill.io/v3/polyfill.min.js?features=es6\"></script>\n"+
@@ -70,7 +87,7 @@ class JaxMaker extends AbstractParseTreeVisitor<String> implements hwVisitor<Str
 	    "</script></head><body>\n";
 	result+="<h1>" +ctx.name.getText()+ "</h1>\n"
 	    + "<h2> Inputs </h2>\n";
-       
+
 	for(Token t:ctx.ins){
 	    result += t.getText() + " ";
 	}
@@ -89,9 +106,9 @@ class JaxMaker extends AbstractParseTreeVisitor<String> implements hwVisitor<Str
 	for(hwParser.DefdeclContext t:ctx.defs){
 	    result += visit(t);
 	}
-	
+
 	result+="\n <h2> Updates </h2>\n";
-	
+
 	for(hwParser.UpdatedeclContext t:ctx.up){
 	    result += visit(t);
 	}
@@ -107,7 +124,7 @@ class JaxMaker extends AbstractParseTreeVisitor<String> implements hwVisitor<Str
     public String visitSimInp(hwParser.SimInpContext ctx){
 	return "<b>"+ctx.in.getText()+"</b>: "+ctx.str.getText()+"<br>\n";
     }
-    
+
     public String visitUpdatedecl(hwParser.UpdatedeclContext ctx){
 	return ctx.write.getText()+"&larr;\\("+ visit(ctx.e)+"\\)<br>\n";
     }
@@ -131,7 +148,7 @@ class JaxMaker extends AbstractParseTreeVisitor<String> implements hwVisitor<Str
 	}
 	return "\\mathit{"+ctx.f.getText()+"}("+args+")";
     }
-    
+
     public String visitSignal(hwParser.SignalContext ctx){
 	return "\\mathrm{"+ctx.x.getText()+"}";
     };
@@ -191,12 +208,12 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements hwVisitor<AST> {
 	Boolean[] tr=new Boolean[s.length()];
 	// for the simulation it is more convenient to work with
 	// Booleans, so converting the string s to an array of
-	// Booleans here:	
+	// Booleans here:
 	for(int i=0; i<s.length();i++)
-	    tr[i]=(s.charAt(i)=='1'); 
+	    tr[i]=(s.charAt(i)=='1');
 	return new Trace(ctx.in.getText(),tr);
     }
-    
+
     public AST visitDefdecl(hwParser.DefdeclContext ctx){
 	List<String> args=new ArrayList<String>();
 	for(Token t:ctx.xs)
@@ -208,8 +225,8 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements hwVisitor<AST> {
 	return new Update(ctx.write.getText(),
 			  (Expr) visit(ctx.e));
     }
-    
-    
+
+
     public AST visitSignal(hwParser.SignalContext ctx){
 	return new Signal(ctx.x.getText());
     };
@@ -225,7 +242,7 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements hwVisitor<AST> {
     };
 
     public AST visitNegation(hwParser.NegationContext ctx){
-	return new Negation((Expr) visit(ctx.e)); 
+	return new Negation((Expr) visit(ctx.e));
     };
 
     public AST visitParenthesis(hwParser.ParenthesisContext ctx){
@@ -238,7 +255,7 @@ class AstMaker extends AbstractParseTreeVisitor<AST> implements hwVisitor<AST> {
 	    args.add((Expr) visit(e));
 	return new UseDef(ctx.f.getText(),args);
     }
-	
+
 }
 
 
