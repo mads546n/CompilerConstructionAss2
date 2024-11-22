@@ -210,9 +210,12 @@ class Circuit extends AST{
         System.out.println("Starting simulation cycles...");
 
         for (int i = 1; i < simlength; i++) {
-            System.out.println("Cycle " + i);
             nextCycle(env, i);
+            recordOutputs(env, i);
         }
+
+        System.out.println("Ending simulation cycles. Traces:");
+        System.out.println(generateTrace());
     }
 
     // Method to set all latch outputs to 0 in given environment
@@ -234,6 +237,7 @@ class Circuit extends AST{
     // Method to initialize all input signals, outputs of latches, remaining signals and print environment on screen
     public void initialize(Environment env) {
         // Initialize input signals
+
         for (String input : inputs) {
             Trace inputTrace = siminputs.stream()
                     .filter(trace -> trace.signal.equals(input))
@@ -270,10 +274,12 @@ class Circuit extends AST{
             update.eval(env);
         }
 
-        // Lastly, print environment
-        System.out.println("Environment efter initialization:");
-        System.out.println(env);
-        System.out.println("Simlength: " + simlength);
+        initializeOutputTraces();
+
+//        // Lastly, print environment
+//        System.out.println("Environment efter initialization:");
+//        System.out.println(env);
+//        System.out.println("Simlength: " + simlength);
     }
 
     // Method to simulate the next cycle of the Circuit
@@ -303,7 +309,48 @@ class Circuit extends AST{
             update.eval(env);
         }
 
-        System.out.println("Environment efter cycle: " + i + ":");
-        System.out.println(env);
+
     }
+
+    public String generateTrace() {
+        StringBuilder tracebuilder = new StringBuilder();
+
+        for (Trace inputTrace : siminputs) {
+            tracebuilder.append(formatTrace(inputTrace));
+        }
+        for (Trace outputTrace : simoutputs) {
+            tracebuilder.append(formatTrace(outputTrace));
+        }
+
+        return tracebuilder.toString();
+    }
+
+    private String formatTrace(Trace trace) {
+        StringBuilder traceLine = new StringBuilder();
+        for (boolean value : trace.values) {
+            traceLine.append(value ? "1" : "0");
+        }
+        traceLine.append(" ").append(trace.signal).append("\n");
+        return traceLine.toString();
+    }
+
+    public void recordOutputs(Environment env, int cycle) {
+        for (String output : outputs) {
+            Boolean value = env.getVariable(output);
+            simoutputs.get(outputs.indexOf(output)).values[cycle] = value;
+        }
+    }
+
+    public void initializeOutputTraces() {
+        simoutputs = new ArrayList<>();
+        for (String output : outputs) {
+            Boolean[] values = new Boolean[simlength];
+            for (int i = 0; i < values.length; i++) {
+                values[i] = false;
+            }
+            simoutputs.add(new Trace(output, values));
+        }
+    }
+
+
 }
